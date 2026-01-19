@@ -1,32 +1,33 @@
+import re
+from PyPDF2 import PdfReader
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load data
-resume = open("sample_resume.txt", "r").read()
-jd = open("sample_jd.txt", "r").read()
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"[^a-z\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
-# Vectorization
-vectorizer = TfidfVectorizer(stop_words="english")
-vectors = vectorizer.fit_transform([resume, jd])
+def extract_text_from_pdf(file):
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() or ""
+    return text
 
-# Similarity score
-score = cosine_similarity(vectors[0], vectors[1])[0][0]
-print(f"\nResume–JD Match Score: {score*100:.2f}%")
+def analyze_resume_jd(resume_text, jd_text):
+    vectorizer = TfidfVectorizer(stop_words="english")
+    vectors = vectorizer.fit_transform([resume_text, jd_text])
+    score = cosine_similarity(vectors[0], vectors[1])[0][0]
 
-# Skill extraction (basic keyword approach)
-skills = [
-    "python", "machine learning", "deep learning", "nlp",
-    "sql", "data analysis", "cloud", "git"
-]
+    skills = [
+        "python", "machine learning", "deep learning", "nlp",
+        "sql", "data analysis", "cloud", "git"
+    ]
 
-resume_lower = resume.lower()
-jd_lower = jd.lower()
+    resume_skills = [s for s in skills if s in resume_text]
+    jd_skills = [s for s in skills if s in jd_text]
+    missing_skills = list(set(jd_skills) - set(resume_skills))
 
-resume_skills = [s for s in skills if s in resume_lower]
-jd_skills = [s for s in skills if s in jd_lower]
-
-missing_skills = set(jd_skills) - set(resume_skills)
-
-print("\nSkills Found in Resume:", resume_skills)
-print("Skills Required in JD:", jd_skills)
-print("Missing Skills:", list(missing_skills))
+    return score, resume_skills, jd_skills, missing_skills
