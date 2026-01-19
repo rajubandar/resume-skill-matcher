@@ -1,2 +1,0 @@
-I am a Computer Science student skilled in Python, Machine Learning,
-Data Analysis, SQL, and Git. I have worked on NLP projects and model training.
